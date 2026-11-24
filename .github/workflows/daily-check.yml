@@ -1,0 +1,32 @@
+# Daily check (AEO B22): the pages and the MCP address AI agents read must still answer. Read-only, no secrets.
+# A failed run emails the repo owner (GitHub's own notice for a failed scheduled workflow).
+name: daily-check
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths: ["scripts/daily-check.mjs", "test/daily-check.test.mjs", ".github/workflows/daily-check.yml"]
+permissions:
+  contents: read
+jobs:
+  live:
+    # The live site is checked on the schedule and by hand, never on a pull request (a PR must not go red for the site).
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/daily-check.mjs
+  offline-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test test/daily-check.test.mjs
